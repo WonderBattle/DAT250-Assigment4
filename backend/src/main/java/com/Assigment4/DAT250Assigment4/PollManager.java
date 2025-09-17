@@ -1,0 +1,162 @@
+package com.Assigment4.DAT250Assigment4;
+
+import com.Assigment4.DAT250Assigment4.model.User;
+import com.Assigment4.DAT250Assigment4.model.Poll;
+import com.Assigment4.DAT250Assigment4.model.Vote;
+import com.Assigment4.DAT250Assigment4.model.VoteOption;
+import org.springframework.stereotype.Component;
+import java.util.*;
+
+@Component
+public class PollManager {
+    private final Map<String, User> users = new HashMap<>(); // key: user id
+    private final Map<String, Poll> polls = new HashMap<>(); // key: poll id
+    private final Map<String, Vote> votes = new HashMap<>(); // key: vote id
+    private final Map<String, VoteOption> voteOptions = new HashMap<>(); // key vote option id
+
+    // User methods
+    public User createUser(User user) {
+        String id = UUID.randomUUID().toString();  // Generate unique ID using UUID
+        user.setId(id);  // Set the generated ID on the user object
+        users.put(id, user); // Store user in the users map
+        return user;  // Return the created user with ID
+    }
+
+    public List<User> getAllUsers() {
+        return new ArrayList<>(users.values());   // Return copy of all users as ArrayList
+    }
+
+    public User getUser(String id) {
+        return users.get(id); // Return user from map or null if not found
+    }
+
+    // Poll methods
+    public Poll createPoll(Poll poll) {
+        String id = UUID.randomUUID().toString();  // Generate unique ID using UUID
+        poll.setId(id);   // Set the generated ID on the poll object
+
+        // Look up the full user object if only ID is provided
+        if (poll.getCreator() != null && poll.getCreator().getId() != null) {
+            User fullUser = users.get(poll.getCreator().getId());  // Get complete user object from storage
+            if (fullUser != null) {
+                poll.setCreator(fullUser); // Replace with complete user object (maintains relationship integrity)
+            }
+        }
+
+        polls.put(id, poll);  // Store poll in the polls map
+
+        // Add poll to creator's created polls (maintain bidirectional relationship)
+        if (poll.getCreator() != null) {
+            poll.getCreator().getCreatedPolls().add(poll); // Add this poll to user's created polls list
+        }
+
+        return poll;
+    }
+
+    public List<Poll> getAllPolls() {
+        return new ArrayList<>(polls.values());  // Return copy of all polls as ArrayList
+    }
+
+    public Poll getPoll(String id) {
+        return polls.get(id);  // Return poll from map or null if not found
+    }
+
+    public void deletePoll(String id) {
+        Poll poll = polls.get(id);  // Get the poll to be deleted
+        if (poll != null) {
+            // Remove poll from creator's created polls (maintain relationship integrity)
+            if (poll.getCreator() != null) {
+                poll.getCreator().getCreatedPolls().remove(poll);  // Remove from user's created polls
+            }
+
+            // Delete associated votes (cascade delete)
+            deleteVotesByPollId(id);
+
+            // Delete associated vote options (cascade delete)
+            deleteVoteOptionsByPollId(id);
+
+            // Finally remove the poll itself
+            polls.remove(id);   // Remove poll from main storage
+        }
+    }
+
+    public void deleteVoteOptionsByPollId(String pollId) {
+        // Remove vote options associated with a poll when it's deleted
+        voteOptions.values().removeIf(voteOption ->  // Iterate through all vote options
+                voteOption.getPoll() != null &&  // Check if vote option has a poll reference
+                        voteOption.getPoll().getId().equals(pollId)  // Check if poll ID matches
+        );
+    }
+
+    public void deleteVotesByPollId(String pollId) {
+        // Remove votes associated with a poll when it's deleted
+        votes.values().removeIf(vote ->   // Iterate through all votes
+                vote.getVoteOption() != null &&  // Check if vote has a vote option reference
+                        vote.getVoteOption().getPoll() != null &&  // Check if vote option has a poll reference
+                        vote.getVoteOption().getPoll().getId().equals(pollId)  // Check if poll ID matches
+        );
+    }
+
+    // VoteOption methods (for poll options)
+    public VoteOption createVoteOption(VoteOption voteOption) {
+        String id = UUID.randomUUID().toString();  // Generate unique ID using UUID
+        voteOption.setId(id);  // Set the generated ID on the vote option object
+        voteOptions.put(id, voteOption);  // Store vote option in the voteOptions map
+        return voteOption;  // Return the created vote option with ID
+    }
+
+    // Helper method to find users by ID
+    public User findUserById(String userId) {
+        return users.get(userId);  // Return user from map or null if not found
+    }
+
+    // Vote methods
+    public Vote createVote(Vote vote) {
+        String id = UUID.randomUUID().toString();  // Generate unique ID using UUID
+        vote.setId(id);  // Set the generated ID on the vote object
+        vote.setPublishedAt(String.valueOf(System.currentTimeMillis()));  // Set current timestamp
+
+        // PROPERLY SET USER RELATIONSHIP (resolve user reference)
+        if (vote.getUser() != null && vote.getUser().getId() != null) {
+            User user = users.get(vote.getUser().getId()); // Get complete user object from storage
+            if (user != null) {
+                vote.setUser(user); // Replace with full user object
+                user.getVotes().add(vote); // Add this vote to user's votes list (bidirectional relationship)
+            }
+        }
+
+        // PROPERLY SET VOTEOPTION RELATIONSHIP (resolve vote option reference)
+        if (vote.getVoteOption() != null && vote.getVoteOption().getId() != null) {
+            VoteOption voteOption = voteOptions.get(vote.getVoteOption().getId());  // Get complete vote option
+            if (voteOption != null) {
+                vote.setVoteOption(voteOption); // Replace with full voteOption object
+                // The vote is properly connected to the voteOption and its poll
+            }
+        }
+
+        votes.put(id, vote); // Store vote in the votes map
+        return vote;
+    }
+
+    public void deleteVote(String voteId) {
+        Vote vote = votes.get(voteId);  // find the vote first
+        if (vote != null) {
+            // maintain bidirectional relationship with user
+            if (vote.getUser() != null) {
+                vote.getUser().getVotes().remove(vote);
+            }
+            // optional: you could also clean up from VoteOption if needed
+
+            votes.remove(voteId);  // remove from map
+        }
+    }
+
+    public List<Vote> getAllVotes() {
+        return new ArrayList<>(votes.values());  // Return copy of all votes as ArrayList
+    }
+
+    public List<VoteOption> getAllVoteOptions() {
+        return new ArrayList<>(voteOptions.values());  // Return copy of all vote options as ArrayList
+    }
+
+}

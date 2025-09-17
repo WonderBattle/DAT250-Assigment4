@@ -1,3 +1,10 @@
+<!-- CreateUserComponent.svelte
+     Purpose:
+      - Create a User object with username and optional email
+      - POST /users to create the user
+      - Store user ID and username in localStorage for persistence
+      - Dispatch a 'created' event with user data (so parent can update state)
+-->
 <script>
     // Event dispatcher so we can tell the parent (App) that a user was created
     import { createEventDispatcher } from "svelte";

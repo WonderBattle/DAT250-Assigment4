@@ -33,12 +33,16 @@
     function removeOption(index) {
         if (options.length > 2) {                       // enforce minimum 2 options
             options = options.filter((_, i) => i !== index);
+            //This creates a new array with the elements that have different index. If i !== index, add it to the new array
         }
     }
 
     // Update an option value
     function updateOption(index, value) {
         options = options.map((o, i) => (i === index ? value : o));
+        //This creates a new map after apply the function
+        // o, actual element; i currently index being processed
+        // If i === index, o = value, else: o=o (keep unchanged)
     }
 
     // Create poll then register each option at /voteoptions
@@ -48,6 +52,7 @@
             message = "You must create a user first (use Create User).";
             return;
         }
+        //This ensures the question isn't just empty spaces, and that there are at least 2 options with actual content (not just spaces)
         if (!question.trim() || options.filter(o => o.trim()).length < 2) {
             message = "Provide a question and at least 2 options.";
             return;
@@ -60,15 +65,15 @@
             question: question.trim(),                  // text of the question
             publishedAt: new Date().toISOString(),      // timestamp now
             validUntil: validUntil                      // if user set a date, use it, else +7 days
-                ? new Date(validUntil).toISOString()
-                : new Date(Date.now() + 7*24*3600*1000).toISOString(),
+                ? new Date(validUntil).toISOString()    // if validUntil has a value, converts the user-provided date to ISO string format
+                : new Date(Date.now() + 7*24*3600*1000).toISOString(),  // if validUntil don't have a value, creates a date 7 days from now
             creator: { id: userId },                    // backend resolves to full user object
             voteOptions: options                        // embed options (caption + order)
-                .map(o => o.trim())
-                .filter(o => o.length > 0)
+                .map(o => o.trim())                     // Remove whitespace from each option
+                .filter(o => o.length > 0)              // Remove any empty strings (after trimming)
                 .map((caption, idx) => ({
-                    caption,
-                    presentationOrder: idx + 1
+                    caption,                            //The option text (using shorthand property name)
+                    presentationOrder: idx + 1          //(converts 0-based index to 1-based order)
                 }))
         };
 
@@ -77,7 +82,7 @@
             const res = await fetch(`${API_BASE}/polls`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(pollPayload)
+                body: JSON.stringify(pollPayload)   //converts to a JSON string that can be sent to the server.
             });
 
             if (!res.ok) {                              // handle non-2xx
@@ -134,8 +139,8 @@
 
     <!-- Grid form for aligned fields -->
     <div class="form">
-        <!-- Question -->
-        <div>
+
+        <div>  <!-- Question -->
             <label class="label">Question *</label>
             <input
                     class="input"
@@ -145,8 +150,7 @@
             />
         </div>
 
-        <!-- Valid until -->
-        <div>
+        <div>  <!-- Valid until -->
             <label class="label">Valid until (optional)</label>
             <input
                     class="input"
@@ -156,8 +160,7 @@
             <div class="help-text">Leave empty to set 7 days from now automatically.</div>
         </div>
 
-        <!-- Options block -->
-        <div>
+        <div>  <!-- Options block -->
             <label class="label">Options *</label>
 
             <!-- List of option inputs -->

@@ -30,6 +30,11 @@ public class PollManager {
         return users.get(id); // Return user from map or null if not found
     }
 
+    // Helper method to find users by ID
+    public User findUserById(String userId) {
+        return users.get(userId);  // Return user from map or null if not found
+    }
+
     // Poll methods
     public Poll createPoll(Poll poll) {
         String id = UUID.randomUUID().toString();  // Generate unique ID using UUID
@@ -105,9 +110,8 @@ public class PollManager {
         return voteOption;  // Return the created vote option with ID
     }
 
-    // Helper method to find users by ID
-    public User findUserById(String userId) {
-        return users.get(userId);  // Return user from map or null if not found
+    public List<VoteOption> getAllVoteOptions() {
+        return new ArrayList<>(voteOptions.values());  // Return copy of all vote options as ArrayList
     }
 
     // Vote methods
@@ -155,8 +159,6 @@ public class PollManager {
         return new ArrayList<>(votes.values());  // Return copy of all votes as ArrayList
     }
 
-    public List<VoteOption> getAllVoteOptions() {
-        return new ArrayList<>(voteOptions.values());  // Return copy of all vote options as ArrayList
-    }
+
 
 }

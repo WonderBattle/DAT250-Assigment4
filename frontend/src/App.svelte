@@ -1,8 +1,8 @@
 <script>
     // Import the three working components
-    import CreateUser from "./CreateUserComponent.svelte"; // component that creates a user
-    import CreatePoll from "./CreatePollComponent.svelte"; // component that creates polls
-    import VotePoll from "./VoteComponent.svelte";         // component that shows polls and allows voting
+    import CreateUser from "./components/CreateUserComponent.svelte"; // component that creates a user
+    import CreatePoll from "./components/CreatePollComponent.svelte"; // component that creates polls
+    import VotePoll from "./components/VoteComponent.svelte";         // component that shows polls and allows voting
     import { onMount } from "svelte";                     // lifecycle helper
 
     // Pick the backend base URL depending on environment:
@@ -76,7 +76,7 @@
 
         // Save to localStorage using consistent key 'userName' and 'userId'
         localStorage.setItem("userId", created.id);
-        const name = created.username ?? created.name ?? "";
+        const name = created.username ?? created.name ?? "";  //safely extract a username or name from an object with fallback values.
         localStorage.setItem("userName", name);
 
         // Update app state to select this user immediately

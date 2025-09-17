@@ -48,11 +48,11 @@
 
             // Build pollId -> [options] mapping
             optionsByPoll = {};
-            for (const vo of voteOptions) {
-                const pid = vo.poll && vo.poll.id ? vo.poll.id : null;
-                if (!pid) continue;                   // skip orphaned options
-                if (!optionsByPoll[pid]) optionsByPoll[pid] = [];
-                optionsByPoll[pid].push(vo);
+            for (const vo of voteOptions) {                                   // Loop through each vote option
+                const pid = vo.poll && vo.poll.id ? vo.poll.id : null;        // Extract poll ID safely
+                if (!pid) continue;                                           // Skip options without a poll (orphans)
+                if (!optionsByPoll[pid]) optionsByPoll[pid] = [];             // Create array if poll ID doesn't exist yet
+                optionsByPoll[pid].push(vo);                                  // Add vote option to the array for this poll
             }
 
             // 3) Load votes

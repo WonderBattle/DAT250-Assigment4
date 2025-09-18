@@ -2,6 +2,9 @@ package com.Assigment4.DAT250Assigment4.model;
 
 import jakarta.persistence.*;
 
+import java.util.LinkedHashSet;
+import java.util.Set;
+
 @Entity
 public class VoteOption {
 
@@ -14,6 +17,9 @@ public class VoteOption {
 
     @ManyToOne
     private Poll poll; // VoteOption belongs to a Poll
+
+    @OneToMany(mappedBy = "votesOn", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Vote> votes = new LinkedHashSet<>();
 
     protected VoteOption() {}
 

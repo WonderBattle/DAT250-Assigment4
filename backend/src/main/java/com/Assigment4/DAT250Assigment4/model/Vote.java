@@ -16,6 +16,9 @@ public class Vote {
     @ManyToOne
     private VoteOption votesOn; // Vote is for an Option
 
+    @ManyToOne
+    private Poll poll;
+
     protected Vote() {}
 
     // Constructor used by User.voteFor()

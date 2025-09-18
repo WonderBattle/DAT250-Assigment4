@@ -21,6 +21,7 @@ public class User {
     private String email;
     @OneToMany(mappedBy = "createdBy", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Poll> createdPolls = new LinkedHashSet<>();
+    @OneToMany(mappedBy = "castBy", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Vote> votes = new ArrayList<>();        // User makes votes
 
     protected User() {}

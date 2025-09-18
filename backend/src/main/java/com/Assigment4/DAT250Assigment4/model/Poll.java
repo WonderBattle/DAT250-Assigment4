@@ -3,23 +3,55 @@ package com.Assigment4.DAT250Assigment4.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.List;
 import java.util.ArrayList;
+import jakarta.persistence.*;
 
+@Entity
 public class Poll {
-    private String id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
     private String question;
+
     private String publishedAt;
     private String validUntil;
-    private User creator;                          // Poll has a creator
-    private List<VoteOption> voteOptions = new ArrayList<>(); // Poll has options
+
+    @ManyToOne
+    private User createdBy;                          // Poll has a creator
+
+    @OneToMany(mappedBy = "poll", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<VoteOption> options = new ArrayList<>(); // Poll has options
     private List<Vote> votes = new ArrayList<>();            // Poll has votes
 
-    public Poll() {}
+    protected Poll() {}
+
+    // Constructor used by User.createPoll()
+    public Poll(String question, User createdBy) {
+        this.question = question;
+        this.createdBy = createdBy;
+    }
+
+    /**
+     *
+     * Adds a new option to this Poll and returns the respective
+     * VoteOption object with the given caption.
+     * The value of the presentationOrder field gets determined
+     * by the size of the currently existing VoteOptions for this Poll.
+     * I.e. the first added VoteOption has presentationOrder=0, the secondly
+     * registered VoteOption has presentationOrder=1 ans so on.
+     */
+    public VoteOption addVoteOption(String caption) {
+        int order = options.size();            // <-- Determine presentationOrder
+        VoteOption option = new VoteOption(caption, order, this);
+        options.add(option);
+        return option;
+    }
 
     // Getters and setters
-    public String getId() {
+    public Long getId() {
         return id;
     }
-    public void setId(String id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
@@ -46,17 +78,17 @@ public class Poll {
 
     // Relationship getters/setters
     public User getCreator() {
-        return creator;
+        return createdBy;
     }
     public void setCreator(User creator) {
-        this.creator = creator;
+        this.createdBy = creator;
     }
 
     public List<VoteOption> getVoteOptions() {
-        return voteOptions;
+        return options;
     }
     public void setVoteOptions(List<VoteOption> voteOptions) {
-        this.voteOptions = voteOptions;
+        this.options = voteOptions;
     }
 
     @JsonIgnore

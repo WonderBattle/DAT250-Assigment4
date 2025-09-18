@@ -9,16 +9,17 @@ import java.util.*;
 
 @Component
 public class PollManager {
-    private final Map<String, User> users = new HashMap<>(); // key: user id
-    private final Map<String, Poll> polls = new HashMap<>(); // key: poll id
-    private final Map<String, Vote> votes = new HashMap<>(); // key: vote id
-    private final Map<String, VoteOption> voteOptions = new HashMap<>(); // key vote option id
+    private final Map<Long, User> users = new HashMap<>(); // key: user id
+    private final Map<Long, Poll> polls = new HashMap<>(); // key: poll id
+    private final Map<Long, Vote> votes = new HashMap<>(); // key: vote id
+    private final Map<Long, VoteOption> voteOptions = new HashMap<>(); // key vote option id
 
     // User methods
     public User createUser(User user) {
-        String id = UUID.randomUUID().toString();  // Generate unique ID using UUID
-        user.setId(id);  // Set the generated ID on the user object
-        users.put(id, user); // Store user in the users map
+        // Hibernate will assign ID on persist
+        //String id = UUID.randomUUID().toString();  // Generate unique ID using UUID
+        //user.setId(id);  // Set the generated ID on the user object
+        users.put(user.getId(), user); // Store user in the users map
         return user;  // Return the created user with ID
     }
 
@@ -26,19 +27,20 @@ public class PollManager {
         return new ArrayList<>(users.values());   // Return copy of all users as ArrayList
     }
 
-    public User getUser(String id) {
+    public User getUser(Long id) {
         return users.get(id); // Return user from map or null if not found
     }
 
     // Helper method to find users by ID
-    public User findUserById(String userId) {
+    public User findUserById(Long userId) {
         return users.get(userId);  // Return user from map or null if not found
     }
 
     // Poll methods
     public Poll createPoll(Poll poll) {
-        String id = UUID.randomUUID().toString();  // Generate unique ID using UUID
-        poll.setId(id);   // Set the generated ID on the poll object
+        // Hibernate will assign ID on persist
+        //String id = UUID.randomUUID().toString();  // Generate unique ID using UUID
+        //poll.setId(id);   // Set the generated ID on the poll object
 
         // Look up the full user object if only ID is provided
         if (poll.getCreator() != null && poll.getCreator().getId() != null) {
@@ -48,7 +50,7 @@ public class PollManager {
             }
         }
 
-        polls.put(id, poll);  // Store poll in the polls map
+        polls.put(poll.getId(), poll); // Store poll in the polls map
 
         // Add poll to creator's created polls (maintain bidirectional relationship)
         if (poll.getCreator() != null) {
@@ -62,11 +64,11 @@ public class PollManager {
         return new ArrayList<>(polls.values());  // Return copy of all polls as ArrayList
     }
 
-    public Poll getPoll(String id) {
+    public Poll getPoll(Long id) {
         return polls.get(id);  // Return poll from map or null if not found
     }
 
-    public void deletePoll(String id) {
+    public void deletePoll(Long id) {
         Poll poll = polls.get(id);  // Get the poll to be deleted
         if (poll != null) {
             // Remove poll from creator's created polls (maintain relationship integrity)
@@ -85,7 +87,7 @@ public class PollManager {
         }
     }
 
-    public void deleteVoteOptionsByPollId(String pollId) {
+    public void deleteVoteOptionsByPollId(Long pollId) {
         // Remove vote options associated with a poll when it's deleted
         voteOptions.values().removeIf(voteOption ->  // Iterate through all vote options
                 voteOption.getPoll() != null &&  // Check if vote option has a poll reference
@@ -93,7 +95,7 @@ public class PollManager {
         );
     }
 
-    public void deleteVotesByPollId(String pollId) {
+    public void deleteVotesByPollId(Long pollId) {
         // Remove votes associated with a poll when it's deleted
         votes.values().removeIf(vote ->   // Iterate through all votes
                 vote.getVoteOption() != null &&  // Check if vote has a vote option reference
@@ -104,9 +106,10 @@ public class PollManager {
 
     // VoteOption methods (for poll options)
     public VoteOption createVoteOption(VoteOption voteOption) {
-        String id = UUID.randomUUID().toString();  // Generate unique ID using UUID
-        voteOption.setId(id);  // Set the generated ID on the vote option object
-        voteOptions.put(id, voteOption);  // Store vote option in the voteOptions map
+        // Hibernate will assign ID on persist
+        //String id = UUID.randomUUID().toString();  // Generate unique ID using UUID
+        //voteOption.setId(id);  // Set the generated ID on the vote option object
+        voteOptions.put(voteOption.getId(), voteOption);  // Store vote option in the voteOptions map
         return voteOption;  // Return the created vote option with ID
     }
 
@@ -116,8 +119,9 @@ public class PollManager {
 
     // Vote methods
     public Vote createVote(Vote vote) {
-        String id = UUID.randomUUID().toString();  // Generate unique ID using UUID
-        vote.setId(id);  // Set the generated ID on the vote object
+        // Hibernate will assign ID on persist
+        //String id = UUID.randomUUID().toString();  // Generate unique ID using UUID
+        //vote.setId(id);  // Set the generated ID on the vote object
         vote.setPublishedAt(String.valueOf(System.currentTimeMillis()));  // Set current timestamp
 
         // PROPERLY SET USER RELATIONSHIP (resolve user reference)
@@ -138,11 +142,11 @@ public class PollManager {
             }
         }
 
-        votes.put(id, vote); // Store vote in the votes map
+        votes.put(vote.getId(), vote); // Store vote in the votes map
         return vote;
     }
 
-    public void deleteVote(String voteId) {
+    public void deleteVote(Long voteId) {
         Vote vote = votes.get(voteId);  // find the vote first
         if (vote != null) {
             // maintain bidirectional relationship with user

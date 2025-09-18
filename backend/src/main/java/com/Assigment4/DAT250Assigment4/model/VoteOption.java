@@ -1,18 +1,34 @@
 package com.Assigment4.DAT250Assigment4.model;
 
+import jakarta.persistence.*;
+
+@Entity
 public class VoteOption {
-    private String id;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
     private String caption;
     private int presentationOrder;
+
+    @ManyToOne
     private Poll poll; // VoteOption belongs to a Poll
 
-    public VoteOption() {}
+    protected VoteOption() {}
+
+    // Constructor used by Poll.addVoteOption()
+    public VoteOption(String caption, int order, Poll poll) {
+        this.caption = caption;
+        this.presentationOrder = order;
+        this.poll = poll;
+    }
 
     // Getters and setters
-    public String getId() {
+    public Long getId() {
         return id;
     }
-    public void setId(String id) {
+    public void setId(Long id) {
         this.id = id;
     }
 

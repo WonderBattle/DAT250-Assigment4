@@ -25,7 +25,7 @@ public class VoteController {
 
     @Operation(summary = "Remove a vote", description = "Deletes a user's vote for a given vote option")
     @DeleteMapping("/{voteId}")
-    public void deleteVote(@PathVariable String voteId) {
+    public void deleteVote(@PathVariable Long voteId) {
         pollManager.deleteVote(voteId);
     }
 

@@ -31,7 +31,7 @@ public class PollController {
 
     @Operation(summary = "Delete a poll", description = "Deletes a poll by its ID") // Step 6: API Documentation
     @DeleteMapping("/{id}")
-    public void deletePoll(@PathVariable String id) {
+    public void deletePoll(@PathVariable Long id) {
         pollManager.deletePoll(id);
     }
 }

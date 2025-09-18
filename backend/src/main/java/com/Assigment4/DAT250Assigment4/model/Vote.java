@@ -1,18 +1,34 @@
 package com.Assigment4.DAT250Assigment4.model;
 
-public class Vote {
-    private String id;
-    private String publishedAt;
-    private User user;        // Vote is made by a User
-    private VoteOption voteOption; // Vote is for an Option
+import jakarta.persistence.*;
 
-    public Vote() {}
+@Entity
+public class Vote {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String publishedAt;
+
+    @ManyToOne
+    private User castBy;        // Vote is made by a User
+
+    @ManyToOne
+    private VoteOption votesOn; // Vote is for an Option
+
+    protected Vote() {}
+
+    // Constructor used by User.voteFor()
+    public Vote(User castBy, VoteOption votesOn) {
+        this.castBy= castBy;
+        this.votesOn = votesOn;
+    }
 
     // Getters and setters
-    public String getId() {
+    public Long getId() {
         return id;
     }
-    public void setId(String id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
@@ -24,16 +40,16 @@ public class Vote {
     }
 
     public User getUser() {
-        return user;
+        return castBy;
     }
     public void setUser(User user) {
-        this.user = user;
+        this.castBy = user;
     }
 
     public VoteOption getVoteOption() {
-        return voteOption;
+        return votesOn;
     }
     public void setVoteOption(VoteOption voteOption) {
-        this.voteOption = voteOption;
+        this.votesOn = voteOption;
     }
 }

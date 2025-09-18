@@ -1,23 +1,64 @@
 package com.Assigment4.DAT250Assigment4.model;
 
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.ArrayList;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.*;                  // <-- Needed for @Entity, @Id, etc.
+import java.util.Set;
 
+@Entity
+@Table(name = "users")
 public class User {
-    private String id;
+
+    @Id @GeneratedValue
+    private Long id;
     private String username;
     private String email;
-    private List<Poll> createdPolls = new ArrayList<>(); // User creates polls
+    @OneToMany(mappedBy = "createdBy", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Poll> createdPolls = new LinkedHashSet<>();
     private List<Vote> votes = new ArrayList<>();        // User makes votes
 
-    public User() {}
+    protected User() {}
+
+    /**
+     * Creates a new User object with given username and email.
+     * The id of a new user object gets determined by the database.
+     */
+    public User(String username, String email) {
+        this.username = username;
+        this.email = email;
+        this.createdPolls = new LinkedHashSet<>();
+    }
+
+    /**
+     * Creates a new Poll object for this user
+     * with the given poll question
+     * and returns it.
+     */
+    public Poll createPoll(String question) {
+        Poll poll = new Poll(question, this);
+        this.createdPolls.add(poll);
+        return poll;
+    }
+
+    /**
+     * Creates a new Vote for a given VoteOption in a Poll
+     * and returns the Vote as an object.
+     */
+    public Vote voteFor(VoteOption option) {
+        return new Vote(this, option);
+    }
 
     // Getters and setters
-    public String getId() {
+    public Long getId() {
         return id;
     }
-    public void setId(String id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
@@ -37,10 +78,10 @@ public class User {
 
     // Add relationship getters/setters
     @JsonIgnore
-    public List<Poll> getCreatedPolls() {
+    public Set<Poll> getCreatedPolls() {
         return createdPolls;
     }
-    public void setCreatedPolls(List<Poll> createdPolls) {
+    public void setCreatedPolls(Set<Poll> createdPolls) {
         this.createdPolls = createdPolls;
     }
 

@@ -1,185 +1,211 @@
-# DAT250: Software Technology Experiment Assignment 3 - Hand-in Report
+# DAT250: Software Technology Experiment Assignment 4 - Hand-in Report
 
 ## Project Overview
-Successfully implemented a Single Page Application (SPA) frontend using Svelte that connects to the existing Spring Boot REST API from Assignment 2. The application provides a complete voting system with poll creation and voting functionality, featuring a modern user interface with proper error handling and responsive design.
+Successfully implemented persistence for the poll application using Java Persistence API (JPA) with Hibernate ORM and an H2 in-memory database. The application models polls, users, vote options, and votes with proper entity relationships. The implementation ensures data integrity through bidirectional mappings and cascading operations.
+
 
 ## Technical Problems Encountered and Solutions
 
 
-### 1. **Svelte Component State Management**
-**Problem**: Initially attempted to use Svelte stores for state management, but realized they were unnecessary for this simple application and created confusion.
+### 1. **Entity ID Type Mismatch**
 
-**Solution**: Simplified to direct component state management using regular variables and props:
-```javascript
-let polls = [];
-let loading = false;
-let error = null;
+**Problem**: My project from Assigment 3 used `String` as entity IDs (set via UUIDs in `PollManager`), which conflicted with JPA’s need for numeric auto-generated primary keys.
+
+**Solution**: Changed all entity IDs from `String` to `Long` and annotated them as:
+
+```java
+@Id
+@GeneratedValue(strategy = GenerationType.IDENTITY)
+private Long id;
 ```
 
-### 2. **API Response Handling**
-**Problem**: Inadequate error handling in fetch requests leading to unclear error messages when backend was unavailable.
+---
 
-**Solution**: Enhanced error handling with proper status checking and error messages:
-```javascript
-const response = await fetch('http://localhost:8080/polls');
-if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Server error: ${response.status} - ${errorText}`);
-}
-```
+### 2. **Missing `poll` Field in `Vote`**
 
-### 3. **Form Validation Challenges**
-**Problem**: Creating dynamic form fields for poll options with add/remove functionality was initially complex.
-
-**Solution**: Implemented array-based option management with index tracking:
-```javascript
-let options = ['', '']; // Start with two empty options
-
-function addOption() {
-    options = [...options, ''];
-}
-
-function removeOption(index) {
-    if (options.length > 2) {
-        options = options.filter((_, i) => i !== index);
-    }
-}
-```
-
-
-### 4. **Real-time Data Updates**
-**Problem**: Vote counts didn't update automatically after voting without manual page refresh.
-
-**Solution**: Implemented automatic data reloading after successful operations:
-```javascript
-async function handleVote() {
-    await voteApi.castVote(...);
-    await loadPolls(); // Reload data to get updated vote counts
-}
-```
-
-### 5. **Frontend Delete Button Shown for Wrong User**
-**Problem**: When logged in as *Alice*, the frontend displayed the delete button for polls created by *Anthony*, and vice versa. This allowed the wrong user to delete polls.
-
-**Solution**: Fixed the conditional rendering in the Svelte components so that the delete button is only shown if `poll.creator === currentUser`. This ensured users can only delete their own polls.
-
-### 6. **Integrating Frontend Build with Spring Boot**
-
-**Problem**: Initially, the frontend and backend had to be run separately (`npm run dev` for frontend, `./gradlew bootRun` for backend). Serving everything together from Spring Boot did not work.
-
-**Solution**: Configured Gradle to:
-
-* Run `npm run build` inside the `frontend/` folder
-* Copy the generated `dist/` files into `backend/src/main/resources/static/`
-* Hook this process into `processResources`, so the frontend always rebuilds before starting Spring Boot.
-
-Now, a single `./gradlew bootRun` launches both backend and frontend seamlessly.
-
-### 7. **CI/CD Build Issue with Frontend Integration**
-
-**Problem**: GitHub Actions failed to build the frontend with the error:
+**Problem**: Hibernate reported:
 
 ```
-You are using Node.js 22.0.0. Vite requires Node.js version 20.19+ or 22.12+.
-Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'vite'
+Collection 'Poll.votes' is 'mappedBy' a property named 'poll' which does not exist
 ```
 
-**Solution**:
+because the `Vote` entity lacked a back-reference to `Poll`.
 
-* Updated Node.js version in Gradle config to `22.12.0`:
+**Solution**: Added the missing relationship:
 
-```kotlin
-node {
-    version.set("22.12.0")
-}
+```java
+@ManyToOne
+private Poll poll;
 ```
 
-* Ensured `npm install` runs before `npm run build` by adding:
+---
 
-```kotlin
-tasks.register<NpmTask>("runBuild") {
-    dependsOn("npmInstall")
-    args = listOf("run", "build")
-    dependsOn("npmInstall") // install before build
-}
+### 3. **Unmapped `VoteOption` ↔ `Vote` Relationship**
+
+**Problem**: Votes were not properly linked to vote options, preventing correct schema generation.
+
+**Solution**: Established a bidirectional mapping:
+
+```java
+// In VoteOption.java
+@OneToMany(mappedBy = "votesOn", cascade = CascadeType.ALL, orphanRemoval = true)
+private Set<Vote> votes = new LinkedHashSet<>();
+
+// In Vote.java
+@ManyToOne
+private VoteOption votesOn;
 ```
 
-After these changes, CI successfully builds and runs all tests.
+---
 
+## Changes made to the base project
+
+We started from a base project without persistence annotations and IDs defined as `String`.
+To adapt the project to JPA, the following changes were applied:
+
+### General
+
+* Added **JPA annotations** (`@Entity`, `@Id`, `@GeneratedValue`, `@OneToMany`, `@ManyToOne`, `@JoinColumn`) across the entity classes.
+* Changed entity IDs from `String` to `Long` with **auto-generated values** using:
+
+  ```java
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
+  ```
+* Imported the necessary JPA classes from `jakarta.persistence.*`.
+
+---
+
+### Poll.java
+
+* Added `@Entity` to mark the class as a JPA entity.
+* Changed `id` field from `String` to `Long` with `@Id` and `@GeneratedValue`.
+* Added two bidirectional relationships:
+
+  ```java
+  @OneToMany(mappedBy = "poll", cascade = CascadeType.ALL, orphanRemoval = true)
+  private Set<VoteOption> options = new HashSet<>();
+
+  @OneToMany(mappedBy = "poll", cascade = CascadeType.ALL, orphanRemoval = true)
+  private Set<Vote> votes = new HashSet<>();
+  ```
+
+---
+
+### VoteOption.java
+
+* Added `@Entity`.
+* Added `id` field with `@Id` and `@GeneratedValue`.
+* Added relationship to `Poll`:
+
+  ```java
+  @ManyToOne
+  private Poll poll;
+  ```
+* Added relationship to `Vote`:
+
+  ```java
+  @OneToMany(mappedBy = "votesOn", cascade = CascadeType.ALL, orphanRemoval = true)
+  private Set<Vote> votes = new LinkedHashSet<>();
+  ```
+
+---
+
+### Vote.java
+
+* Added `@Entity`.
+* Added `id` field with `@Id` and `@GeneratedValue`.
+* Added relationship to `VoteOption`:
+
+  ```java
+  @ManyToOne
+  private VoteOption votesOn;
+  ```
+* Added relationship to `Poll`:
+
+  ```java
+  @ManyToOne
+  private Poll poll;
+  ```
 ---
 
 
 ## Test Scenario
-The application supports the following test scenario:
 
-1. **Application Loading**: Open http://localhost:8080 and verify the voting app loads without errors
-2. **User Creation**: Click "Create User" button and create a user with username and email
-3. **Poll Creation**: Click "Create New Poll" button and create a poll with multiple options
-4. **Poll Display**: Return to main view and verify the created poll appears in the list
-5. **Voting Functionality**: Select a vote option and cast a vote successfully
-6. **Error Handling**: Test error scenarios (empty forms, backend unavailable)
-7. **Responsive Design**: Verify the interface works on different screen sizes
+The application supports the following scenario:
+
+1. **User Creation**: A new user can be created with username and email.
+2. **Poll Creation**: A user creates a poll with a question.
+3. **Adding Vote Options**: Vote options can be added to the poll with proper `presentationOrder`.
+4. **Voting**: A user can vote for one of the available options.
+5. **Bidirectional Relationships**: Votes and polls are correctly linked to their users and options.
+6. **Persistence Test**: Running `PollsTest` verifies that entities are created, persisted, and queried successfully.
+
+👉 In addition, the application also passes all the tests of the previous Assignments.
 
 ## Link to Code
 
 - Code from Assigment 1: https://github.com/WonderBattle/DAT250-Assigment1
 - Code from Assigment 2: https://github.com/WonderBattle/DAT250-Assigment2
+- Code from Assigment 3: https://github.com/WonderBattle/DAT250-Assigment3
 
 
 
 ## Key Features Implemented
 
-### ✅ Frontend Components
-- **CreatePollComponent.svelte**: Complete poll creation form with dynamic option management
-- **CreateUserComponent.svelte**: Create an user to create polls and vote in the polls
-- **VoteComponent.svelte**: Voting interface with option selection and vote submission
-- Responsive design with modern CSS styling
+### ✅ Entity Annotations
 
-### ✅ API Integration
-- RESTful API communication with Spring Boot backend
-- Proper error handling and loading states
-- Real-time data updates after mutations
+* `@Entity` added to `Poll`, `VoteOption`, `Vote`, and `User`.
+* `@Id` and `@GeneratedValue` for primary keys.
 
-### ✅ User Experience
-- Intuitive poll creation with add/remove option functionality
-- Clean voting interface with visual feedback
-- Comprehensive error messages and validation
+### ✅ Relationships
 
-### ✅ Technical Implementation
-- Pure Svelte components without external dependencies
-- Modern CSS with flexbox/grid layouts
-- Proper component separation and reusability
-- Efficient state management
+* **Poll ↔ Vote**: One-to-many, mapped by `poll`.
+* **Poll ↔ VoteOption**: One-to-many, mapped by `poll`.
+* **VoteOption ↔ Vote**: One-to-many, mapped by `votesOn`.
+* **Vote ↔ VoteOption**: Many-to-one with join column `option_id`.
+* **Vote ↔ Poll**: Many-to-one with implicit join column `poll_id`.
+
+### ✅ Database Schema
+
+Hibernate automatically generated the following tables in H2:
+
+* `poll`
+* `vote_option`
+* `vote`
+* `user`
+
+Foreign keys:
+
+* `vote.poll_id → poll.id`
+* `vote.option_id → vote_option.id`
+* `vote_option.poll_id → poll.id`
+
 
 ## Pending Issues
 
-### 1. **User Authentication**
-The application currently uses hardcoded user IDs for demonstration. A proper user authentication system with login/logout functionality needs to be implemented.
+### 1. **Column Naming**
 
-### 2. **Real-time Updates with WebSocket**
-Lack of WebSocket implementation for fully bidirectional communication and live vote updates without page refresh.
+Currently relying on Hibernate’s default column names. For production, explicit `@JoinColumn(name = "...")` annotations should be standardized.
 
-### 3. **Caddy Reverse Proxy Setup**
-Missing unified deployment with Caddy server to serve both frontend and backend through a single endpoint.
+### 2. **Validation**
 
-### 4. **GraphQL API Migration**
-REST API has not been replaced with GraphQL for more flexible data fetching and reduced over-fetching.
+No validation annotations (`@NotNull`, `@Size`) implemented yet for entity fields.
 
-### 5. **SvelteKit Migration**
-SPA remains as static assets instead of using SvelteKit for server-side rendering and improved SEO.
+### 3. **Cascade Deletes**
 
-### 6. **Advanced Validation**
-More comprehensive form validation including duplicate option detection and poll expiration date validation.
+Although cascading works for some relationships, deletion scenarios (e.g., removing a `Poll`) need more thorough testing.
 
-### 7. **Persistent User Sessions**
-Implementation of proper session management to maintain user state across browser sessions.
+### 4. **PollManager**
 
-### 8. **Accessibility Features**
-Additional ARIA labels and keyboard navigation support for better accessibility compliance.
+Still uses in-memory `HashMap` storage for certain operations. Full migration to JPA repositories would simplify persistence handling.
 
 
 
 ## Conclusion
-The assignment was successfully completed with a functional SPA frontend that integrates seamlessly with the existing Spring Boot REST API. The main challenges involved CORS configuration and proper state management in Svelte components, but all critical issues were resolved. The application provides a modern, responsive voting interface with complete CRUD functionality. The experience provided valuable insights into SPA development with Svelte and frontend-backend integration patterns.
+The assignment was successfully completed with a fully working persistence layer for polls, vote options, and votes.
+The main challenges involved adapting entity IDs from `String` to `Long`, fixing missing relationships, and setting up proper bidirectional mappings.
 
-I have learned a lot about modern web development practices, component-based architecture, and REST API consumption. The clean separation of concerns and responsive design make the application both maintainable and user-friendly.
+By resolving these, Hibernate correctly generated the database schema, and the provided test case passed.
+This assignment provided valuable experience with JPA, Hibernate mappings, and schema inspection in H2.

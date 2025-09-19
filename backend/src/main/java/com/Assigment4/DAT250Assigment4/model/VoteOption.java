@@ -52,6 +52,7 @@ public class VoteOption {
         this.presentationOrder = presentationOrder;
     }
 
+
     public Poll getPoll() {
         return poll;
     }

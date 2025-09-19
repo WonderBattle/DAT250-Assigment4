@@ -14,11 +14,19 @@ public class PollManager {
     private final Map<Long, Vote> votes = new HashMap<>(); // key: vote id
     private final Map<Long, VoteOption> voteOptions = new HashMap<>(); // key vote option id
 
+    private long userIdSeq = 1;
+    private long pollIdSeq = 1;
+    private long voteIdSeq = 1;
+    private long voteOptionIdSeq = 1;
+
+
     // User methods
     public User createUser(User user) {
         // Hibernate will assign ID on persist
         //String id = UUID.randomUUID().toString();  // Generate unique ID using UUID
         //user.setId(id);  // Set the generated ID on the user object
+        user.setId(userIdSeq++);  // assign next id
+
         users.put(user.getId(), user); // Store user in the users map
         return user;  // Return the created user with ID
     }
@@ -41,21 +49,18 @@ public class PollManager {
         // Hibernate will assign ID on persist
         //String id = UUID.randomUUID().toString();  // Generate unique ID using UUID
         //poll.setId(id);   // Set the generated ID on the poll object
+        poll.setId(pollIdSeq++);
 
         // Look up the full user object if only ID is provided
         if (poll.getCreator() != null && poll.getCreator().getId() != null) {
             User fullUser = users.get(poll.getCreator().getId());  // Get complete user object from storage
             if (fullUser != null) {
                 poll.setCreator(fullUser); // Replace with complete user object (maintains relationship integrity)
+                fullUser.getCreatedPolls().add(poll); // Link poll directly to the correct user
             }
         }
 
         polls.put(poll.getId(), poll); // Store poll in the polls map
-
-        // Add poll to creator's created polls (maintain bidirectional relationship)
-        if (poll.getCreator() != null) {
-            poll.getCreator().getCreatedPolls().add(poll); // Add this poll to user's created polls list
-        }
 
         return poll;
     }
@@ -109,6 +114,9 @@ public class PollManager {
         // Hibernate will assign ID on persist
         //String id = UUID.randomUUID().toString();  // Generate unique ID using UUID
         //voteOption.setId(id);  // Set the generated ID on the vote option object
+        voteOption.setId(voteOptionIdSeq++);
+
+
         voteOptions.put(voteOption.getId(), voteOption);  // Store vote option in the voteOptions map
         return voteOption;  // Return the created vote option with ID
     }
@@ -122,6 +130,8 @@ public class PollManager {
         // Hibernate will assign ID on persist
         //String id = UUID.randomUUID().toString();  // Generate unique ID using UUID
         //vote.setId(id);  // Set the generated ID on the vote object
+        vote.setId(voteIdSeq++);
+
         vote.setPublishedAt(String.valueOf(System.currentTimeMillis()));  // Set current timestamp
 
         // PROPERLY SET USER RELATIONSHIP (resolve user reference)

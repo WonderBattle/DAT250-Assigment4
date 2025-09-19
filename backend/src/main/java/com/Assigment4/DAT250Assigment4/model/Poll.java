@@ -79,6 +79,7 @@ public class Poll {
     }
 
     // Relationship getters/setters
+
     public User getCreator() {
         return createdBy;
     }

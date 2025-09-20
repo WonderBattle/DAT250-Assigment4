@@ -3,6 +3,8 @@ package com.Assigment4.DAT250Assigment4.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.List;
 import java.util.ArrayList;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 
 @Entity
@@ -17,9 +19,11 @@ public class Poll {
     private String validUntil;
 
     @ManyToOne
+    @JsonIgnoreProperties("createdPolls") // ignore back reference
     private User createdBy;                          // Poll has a creator
 
     @OneToMany(mappedBy = "poll", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties("poll") // prevent infinite recursion
     private List<VoteOption> options = new ArrayList<>(); // Poll has options
 
     @OneToMany(mappedBy = "poll", cascade = CascadeType.ALL, orphanRemoval = true)

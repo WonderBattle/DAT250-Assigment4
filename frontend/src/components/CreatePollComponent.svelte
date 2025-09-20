@@ -92,17 +92,18 @@
             const createdPoll = await res.json();       // poll with generated id
 
             // 2) Register each vote option at /voteoptions so they get their own ids
+
             const createdVoteOptions = [];              // collect created options
             for (const vo of pollPayload.voteOptions) {
                 const voPayload = {
                     caption: vo.caption,                // option text
                     presentationOrder: vo.presentationOrder, // original order
-                    poll: { id: createdPoll.id }        // link option to the poll
+                    poll: {id: createdPoll.id}        // link option to the poll
                 };
 
                 const resVo = await fetch(`${API_BASE}/voteoptions`, {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
+                    headers: {"Content-Type": "application/json"},
                     body: JSON.stringify(voPayload)
                 });
 
@@ -114,16 +115,22 @@
                 createdVoteOptions.push(createdVo);
             }
 
+
+
             // 3) Success feedback + clear form + notify parent
-            message = `Poll created (id: ${createdPoll.id}). ${createdVoteOptions.length} option(s) registered.`;
+            //message = `Poll created (id: ${createdPoll.id}). ${createdVoteOptions.length} option(s) registered.`;
+            message = `Poll created (id: ${createdPoll.id}). ${createdPoll.voteOptions.length} option(s) registered.`;
             question = "";                              // reset fields
             validUntil = "";
             options = ["", ""];
 
+            /*
             dispatch("created", {                       // let <App/> or parent know
                 pollId: createdPoll.id,
                 voteOptions: createdVoteOptions
             });
+            */
+            dispatch("created", createdPoll);
         } catch (err) {
             console.error(err);
             message = "Error creating poll: " + err.message;

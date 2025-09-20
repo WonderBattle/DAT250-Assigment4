@@ -1,5 +1,6 @@
 package com.Assigment4.DAT250Assigment4.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 
 @Entity
@@ -11,9 +12,11 @@ public class Vote {
     private String publishedAt;
 
     @ManyToOne
+    @JsonIgnoreProperties("votes") // break cycle
     private User castBy;        // Vote is made by a User
 
     @ManyToOne
+    @JsonIgnoreProperties("votes") // break cycle
     private VoteOption votesOn; // Vote is for an Option
 
     @ManyToOne

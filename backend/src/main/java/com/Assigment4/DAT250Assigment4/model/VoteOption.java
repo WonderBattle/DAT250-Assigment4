@@ -1,5 +1,6 @@
 package com.Assigment4.DAT250Assigment4.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 
 import java.util.LinkedHashSet;
@@ -16,9 +17,11 @@ public class VoteOption {
     private int presentationOrder;
 
     @ManyToOne
+    @JsonIgnoreProperties("voteOptions") // avoid loop
     private Poll poll; // VoteOption belongs to a Poll
 
     @OneToMany(mappedBy = "votesOn", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties("voteOption") // avoid loop
     private Set<Vote> votes = new LinkedHashSet<>();
 
     protected VoteOption() {}

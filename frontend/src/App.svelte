@@ -51,11 +51,11 @@
 
     // currentUser is either { id, username } or null
     let currentUser = storedId && storedName
-        ? { id: storedId, username: storedName }
+        ? { id: Number(storedId), username: storedName }
         : null;
 
     // The selected user id in the <select>. Keep this synchronized with currentUser.
-    let selectedUserId = currentUser ? currentUser.id : "";
+    let selectedUserId = currentUser ? currentUser.id : null;
 
 
     // --- Poll created handler: used when CreatePoll dispatches 'created' ----
@@ -80,8 +80,8 @@
         localStorage.setItem("userName", name);
 
         // Update app state to select this user immediately
-        currentUser = { id: created.id, username: name };
-        selectedUserId = created.id;
+        currentUser = { id: Number(created.id), username: name };
+        selectedUserId = Number(created.id);
 
         // reload users so the select includes the new user
         loadUsers();
@@ -119,13 +119,18 @@
     // --- Switch user when a different id is selected in the dropdown -------
     function changeUserById(id) {
         // find user object from loaded list
-        const u = users.find(x => x.id === id);
+        //const u = users.find(x => x.id === id);
+
+        const numericId = Number(id);
+        const u = users.find(x => x.id === numericId);
+
         if (!u) return; // ignore invalid id
 
         // set current user and persist
+        selectedUserId = numericId;
+
         currentUser = { id: u.id, username: u.username ?? u.name ?? "" };
-        selectedUserId = currentUser.id;
-        localStorage.setItem("userId", currentUser.id);
+        localStorage.setItem("userId", String(u.id)); // stored as string in localStorage
         localStorage.setItem("userName", currentUser.username);
 
         //force VotePoll to refresh (so counts reflect this user's votes)

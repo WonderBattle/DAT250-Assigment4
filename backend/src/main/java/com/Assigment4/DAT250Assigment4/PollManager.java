@@ -60,6 +60,19 @@ public class PollManager {
             }
         }
 
+        // ✅ PROCESS VOTEOPTIONS BUT DON'T RETURN THEM (to avoid duplicates)
+        if (poll.getVoteOptions() != null && !poll.getVoteOptions().isEmpty()) {
+            for (VoteOption option : poll.getVoteOptions()) {
+                // Set the poll reference for the options that came in the request
+                option.setPoll(poll);
+                // This ensures relationships are maintained even though we won't return these options
+            }
+
+            // ✅ CRITICAL: CLEAR THE VOTEOPTIONS FROM THE POLL RESPONSE
+            // This prevents the null-ID options from appearing in the JSON
+            poll.setVoteOptions(new ArrayList<>());
+        }
+
         polls.put(poll.getId(), poll); // Store poll in the polls map
 
         return poll;
@@ -116,6 +129,18 @@ public class PollManager {
         //voteOption.setId(id);  // Set the generated ID on the vote option object
         voteOption.setId(voteOptionIdSeq++);
 
+        if (voteOption.getPoll() != null && voteOption.getPoll().getId() != null) {
+            Poll poll = polls.get(voteOption.getPoll().getId());
+            if (poll != null) {
+                // Set the full poll object (not just the reference)
+                voteOption.setPoll(poll);
+                // Add this vote option to the poll's collection
+                if (poll.getVoteOptions() == null) {
+                    poll.setVoteOptions(new ArrayList<>());
+                }
+                poll.getVoteOptions().add(voteOption);
+            }
+        }
 
         voteOptions.put(voteOption.getId(), voteOption);  // Store vote option in the voteOptions map
         return voteOption;  // Return the created vote option with ID

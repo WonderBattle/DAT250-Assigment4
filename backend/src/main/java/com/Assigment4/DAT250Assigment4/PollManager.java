@@ -39,6 +39,24 @@ public class PollManager {
         return users.get(id); // Return user from map or null if not found
     }
 
+    public void deleteUser(Long id) {
+        User user = users.get(id);
+        if (user != null) {
+            // Cascade delete: remove polls created by this user
+            for (Poll poll : new ArrayList<>(user.getCreatedPolls())) {
+                deletePoll(poll.getId());
+            }
+
+            // Cascade delete: remove votes cast by this user
+            for (Vote vote : new ArrayList<>(user.getVotes())) {
+                deleteVote(vote.getId());
+            }
+
+            // Finally remove the user itself
+            users.remove(id);
+        }
+    }
+
     // Helper method to find users by ID
     public User findUserById(Long userId) {
         return users.get(userId);  // Return user from map or null if not found

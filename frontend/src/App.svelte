@@ -97,6 +97,9 @@
     async function onUserDeleted() {
         if (!currentUser) return; // nothing to delete
 
+        // ✅ Store the ID before clearing currentUser
+        const userIdToDelete = currentUser.id;
+
         try {
             await fetch(`${API_BASE}/users/${currentUser.id}`, { method: "DELETE" });
 
@@ -108,11 +111,18 @@
         // Clear local session and UI state
         localStorage.removeItem("userId");
         localStorage.removeItem("userName");
+
+        // ✅ Remove the user from the local users list using the stored ID
+        users = users.filter(user => user.id !== userIdToDelete);
+
         currentUser = null;
         selectedUserId = "";
 
         // Refresh user list so the select updates
         await loadUsers();
+
+        // Also force refresh the VotePoll component
+        refreshKey += 1;
     }
 
 

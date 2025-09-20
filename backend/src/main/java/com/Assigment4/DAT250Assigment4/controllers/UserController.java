@@ -5,6 +5,7 @@ import com.Assigment4.DAT250Assigment4.model.User;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -27,5 +28,11 @@ public class UserController {
     @PostMapping
     public User createUser(@RequestBody User user) {
         return pollManager.createUser(user);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+        pollManager.deleteUser(id);
+        return ResponseEntity.noContent().build();
     }
 }

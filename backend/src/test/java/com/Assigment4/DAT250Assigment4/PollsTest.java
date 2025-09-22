@@ -55,6 +55,8 @@ public class PollsTest {
                 .managedClass(Vote.class)
                 .managedClass(VoteOption.class)
                 .property(PersistenceConfiguration.JDBC_URL, "jdbc:h2:mem:polls")
+                //added this line ->
+                .property(PersistenceConfiguration.JDBC_URL, "jdbc:h2:file:./build/polls-db")
                 .property(PersistenceConfiguration.SCHEMAGEN_DATABASE_ACTION, "drop-and-create")
                 .property(PersistenceConfiguration.JDBC_USER, "sa")
                 .property(PersistenceConfiguration.JDBC_PASSWORD, "")

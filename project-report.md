@@ -153,6 +153,99 @@ To adapt the project to JPA, the following changes were applied:
 
 ---
 
+## Database Configuration and Schema Analysis
+
+### Database Setup for Testing and Inspection
+
+To enable database table inspection during testing, the project was configured to use a file-based H2 database instead of an in-memory database. This allows the database to persist after test execution, making it possible to examine the generated schema and test data.
+
+
+
+The key modification made to the `PollsTest.java` file was changing the JDBC URL from in-memory to file-based storage:
+
+**Before:**
+```java
+.property(PersistenceConfiguration.JDBC_URL, "jdbc:h2:mem:polls")
+```
+
+**After:**
+```java
+.property(PersistenceConfiguration.JDBC_URL, "jdbc:h2:file:./build/polls-db")
+```
+
+This change creates a physical database file at `DAT250-Assigment4/build/polls-db.mv.db` that persists after test execution.
+
+### Database Connection in IntelliJ
+
+The H2 database can be accessed through IntelliJ's Database tool window using the following connection parameters:
+- **URL**: `jdbc:h2:file:./build/polls-db`
+- **User**: `sa`
+- **Password**: (empty)
+
+## Database Schema Analysis
+
+Hibernate automatically generated the following tables based on the JPA entity mappings:
+
+### 1. USERS Table
+- **Purpose**: Stores user information
+- **Columns**:
+    - `id` (Primary Key): Auto-generated user identifier
+    - `username`: Unique username for each user
+    - `email`: User's email address
+- **Relationships**: Serves as the owner of polls through the application logic
+
+![USERSTable](images/users-table.png)
+
+### 2. POLL Table
+- **Purpose**: Stores poll definitions and metadata
+- **Columns**:
+    - `id` (Primary Key): Auto-generated poll identifier
+    - `question`: The poll question text
+    - `created_by`: References the user who created the poll (implied by application logic)
+    - Additional metadata columns for timestamps and status
+- **Relationships**:
+    - One-to-Many with `VOTEOPTION` (a poll has multiple voting options)
+    - One-to-Many with `VOTE` (a poll collects multiple votes)
+
+![POLLTable](images/poll-table.png)
+
+### 3. VOTEOPTION Table
+- **Purpose**: Stores the available voting options for each poll
+- **Columns**:
+    - `id` (Primary Key): Auto-generated option identifier
+    - `caption`: The text description of the voting option
+    - `presentation_order`: Determines the display order of options
+    - `poll_id` (Foreign Key): References the parent poll
+- **Relationships**:
+    - Many-to-One with `POLL` (each option belongs to one poll)
+    - One-to-Many with `VOTE` (each option can receive multiple votes)
+
+![VOTEOPTIONTable](images/voteoption-table.png)
+
+### 4. VOTE Table
+- **Purpose**: Records individual votes cast by users
+- **Columns**:
+    - `id` (Primary Key): Auto-generated vote identifier
+    - `user_id` (Foreign Key): References the user who cast the vote
+    - `option_id` (Foreign Key): References the selected voting option
+    - `poll_id` (Foreign Key): References the poll being voted on
+    - `timestamp`: When the vote was cast
+- **Relationships**:
+    - Many-to-One with `USERS` (each vote is cast by one user)
+    - Many-to-One with `VOTEOPTION` (each vote selects one option)
+    - Many-to-One with `POLL` (each vote belongs to one poll)
+
+![VOTETable](images/vote-table.png)
+
+
+### Foreign Key Constraints
+The database maintains referential integrity through foreign key constraints:
+- `VOTE.poll_id → POLL.id`
+- `VOTE.option_id → VOTEOPTION.id`
+- `VOTEOPTION.poll_id → POLL.id`
+
+
+
 ## Test Scenario
 
 The application supports the following scenario:
